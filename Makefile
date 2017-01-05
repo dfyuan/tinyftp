@@ -2,6 +2,7 @@ PREFIX=/usr/local
 BINDIR= $(PREFIX)/bin
 LIBS = 
 PROGRAM = tinyftp
+#CC=csky-linux-gcc
 CC=gcc
 CFLAGS= 
 COMPILE = $(CC) $(CFLAGS) -c

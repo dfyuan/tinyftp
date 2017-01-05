@@ -36,6 +36,8 @@
 #include <netdb.h>
 #include <errno.h>
 #include <dirent.h>
+#include <sys/ioctl.h>
+#include <net/if.h>
 #include "defines.h"
 #include "cmdparser.h"
 #include "fileutils.h"
@@ -625,6 +627,22 @@ int close_connection(int connection) {
 	return close(connection);
 }
 
+/*
+ * bind NIC
+ */
+int bind_NIC(int socket_fd, char *nic_name)
+{
+	struct ifreq req;
+
+	strncpy(req.ifr_name, nic_name, strlen(nic_name) + 1);
+
+	if (setsockopt(socket_fd, SOL_SOCKET, SO_BINDTODEVICE, &req, sizeof(struct ifreq)) < 0) {
+		perror("failed to bind to NIC\n");
+	}
+
+	printf("bind NIC(%s)\n", nic_name);
+}
+
 /**
  * Creates new server listening socket and make the main loop , which waits
  * for new connections.
@@ -670,6 +688,9 @@ int create_socket(struct cmd_opts *opts) {
 		raiseerr(ERR_CONNECT);
 		return 1;
 	}
+
+	bind_NIC(sock, "eth1");
+
 	int flag = 1;
 	setsockopt(sock, SOL_SOCKET,SO_REUSEADDR,(char *) &flag, sizeof(int));
 	
