@@ -454,7 +454,11 @@ int interract(int conn_fd,cmd_opts *opts) {
 					if(data_buff==NULL || strlen(data_buff)==0 || data_buff[0]=='\0') {
 						send_repl(conn_fd,REPL_501);
 					} else {
-						change_dir(conn_fd,parent_dir,current_dir,virtual_dir,data_buff);
+						if (strncmp(data_buff, opts->chrootdir, strlen(opts->chrootdir))) {
+							send_repl(conn_fd,REPL_501);
+						} else {
+							change_dir(conn_fd,parent_dir,current_dir,virtual_dir,data_buff);
+						}
 					}
 				}
 				break;
@@ -689,7 +693,7 @@ int create_socket(struct cmd_opts *opts) {
 		return 1;
 	}
 
-	bind_NIC(sock, "eth1");
+	bind_NIC(sock, "wlan0");
 
 	int flag = 1;
 	setsockopt(sock, SOL_SOCKET,SO_REUSEADDR,(char *) &flag, sizeof(int));
