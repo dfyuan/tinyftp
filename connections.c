@@ -701,7 +701,7 @@ int create_socket(struct cmd_opts *opts) {
 		return 1;
 	}
 
-	bind_NIC(sock, "wlan0");
+	bind_NIC(sock, "eth1");
 
 	int flag = 1;
 	setsockopt(sock, SOL_SOCKET,SO_REUSEADDR,(char *) &flag, sizeof(int));
