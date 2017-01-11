@@ -299,9 +299,16 @@ int interract(int conn_fd,cmd_opts *opts) {
 	bool is_loged = FALSE;
 	bool state_user = FALSE;
 	char rename_from[MAXPATHLEN];
-	
+	char chrootdir[MAXPATHLEN];
+
 	memset((char *)&current_dir, 0, MAXPATHLEN);
 	strcpy(current_dir,opts->chrootdir);
+	/* save chrootdir, for opts will be free next */
+	strcpy(chrootdir, opts->chrootdir);
+	if (chrootdir[strlen(chrootdir)] == '/') {
+		chrootdir[strlen(chrootdir)] == '\0';
+	}
+
 	strcpy(parent_dir,opts->chrootdir);
 	free(opts);
 	chdir(current_dir);
@@ -451,10 +458,11 @@ int interract(int conn_fd,cmd_opts *opts) {
 			case CMD_CWD:
 				if(!is_loged) send_repl(conn_fd,REPL_530);
 				else {
+					/* '\' is for relative path access */
 					if(data_buff==NULL || strlen(data_buff)==0 || data_buff[0]=='\0') {
 						send_repl(conn_fd,REPL_501);
 					} else {
-						if (strncmp(data_buff, opts->chrootdir, strlen(opts->chrootdir))) {
+						if (strncmp(data_buff, chrootdir, strlen(chrootdir)) && data_buff[0] == '/') {
 							send_repl(conn_fd,REPL_501);
 						} else {
 							change_dir(conn_fd,parent_dir,current_dir,virtual_dir,data_buff);
