@@ -20,14 +20,14 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  */
- 
+
 #include <stdio.h>
 #include <unistd.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <arpa/inet.h> 
+#include <arpa/inet.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -180,7 +180,8 @@ static bool get_file_info(const char *file_name, char *line){
  * Get and send the info for the current directory
  */
 bool write_list(int sock, int client_sock, const char *current_dir) {
-	
+
+	printf("write_list current_dir = %s\n", current_dir);
 	if(client_sock>0) {
 		if(sock!=client_sock) {
 			send_repl(sock,REPL_150);
@@ -200,7 +201,8 @@ bool write_list(int sock, int client_sock, const char *current_dir) {
 		}
 		return FALSE;
 	}
-	
+	printf("current_dir = %s\n", current_dir);
+
 	char line[300];
 	while(1) {
 		struct dirent *d_next = readdir(dir);
@@ -228,7 +230,7 @@ bool write_list(int sock, int client_sock, const char *current_dir) {
  * Create a directory, called "new_dir"
  */
 bool make_dir(int sock,const char *new_dir,char *reply) {
-	
+
 	struct stat s_buff;
 	int status = stat(new_dir,&s_buff);
 	if(status==0) {
@@ -254,13 +256,13 @@ bool remove_dir(int sock,const char *removed_dir) {
 	if(is_special_dir(removed_dir)) {
 		send_repl(sock,REPL_550);
 		return FALSE;
-	} 
+	}
 	struct stat s_buff;
 	int status = stat(removed_dir,&s_buff);
 	if(status!=0) {
 		send_repl(sock,REPL_550);
 		return FALSE;
-	} 
+	}
 	int b_mask = s_buff.st_mode & S_IFMT;
 	if(b_mask != S_IFDIR) {
 		send_repl(sock,REPL_550);
@@ -282,18 +284,18 @@ bool rename_fr(int sock,const char *from,const char *to) {
 	if(is_special_dir(from)) {
 		send_repl(sock,REPL_553);
 		return FALSE;
-	} 
+	}
 	struct stat s_buff;
 	int status = stat(from,&s_buff);
 	if(status!=0) {
 		send_repl(sock,REPL_553);
 		return FALSE;
-	} 
+	}
 	status = stat(to,&s_buff);
 	if(status==0) {
 		send_repl(sock,REPL_553);
 		return FALSE;
-	} 
+	}
 	int b_mask = s_buff.st_mode & S_IFMT;
 	if(b_mask == S_IFDIR || b_mask == S_IFREG) {
 		int status = rename(from,to);
@@ -319,7 +321,7 @@ bool delete_file(int sock,const char *delete_file) {
 	if(status!=0) {
 		send_repl(sock,REPL_550);
 		return FALSE;
-	} 
+	}
 	int b_mask = s_buff.st_mode & S_IFMT;
 	if(b_mask != S_IFREG) {
 		send_repl(sock,REPL_550);
@@ -347,7 +349,7 @@ bool stat_file(int sock, const char *file_path,char *reply) {
 		send_repl_len(sock,reply,len);
 		int b_mask = s_buff.st_mode & S_IFMT;
 		if(b_mask == S_IFDIR) {
-			if(getcwd(line,300)!=NULL) {	
+			if(getcwd(line,300)!=NULL) {
 				int status = chdir(file_path);
 				if(status != 0) {
 					send_repl(sock,REPL_450);
@@ -370,7 +372,7 @@ bool stat_file(int sock, const char *file_path,char *reply) {
 				send_repl(sock,REPL_450);
 				//free(line);
 				return FALSE;
-					
+
 			}
 		} else if(b_mask == S_IFREG){
 			if(get_file_info_stat(file_path,line,&s_buff)) {
@@ -380,7 +382,7 @@ bool stat_file(int sock, const char *file_path,char *reply) {
 					return FALSE;
 				}
 			}
-		} 
+		}
 		send_repl(sock,REPL_211_END);
 	}
 	else {
@@ -395,6 +397,7 @@ bool stat_file(int sock, const char *file_path,char *reply) {
  * Change current working dir.
  */
 bool change_dir(int sock,const char *parent_dir,char *current_dir,char *virtual_dir,char *data_buff) {
+	printf("data_buff = %s\n", data_buff);
 	DIR *dir = ensure_dir_exists(sock,data_buff);
 	if(dir!=NULL) {
 		closedir(dir);
@@ -407,7 +410,7 @@ bool change_dir(int sock,const char *parent_dir,char *current_dir,char *virtual_
 					return TRUE;
 				}
 			}
-		} 
+		}
 	}
 	send_repl(sock,REPL_550);
 	return FALSE;
@@ -464,7 +467,7 @@ bool retrieve_file(int sock, int client_sock, int type, const char * file_name) 
 		free(read_buff);
 		return FALSE;
 	}
-	
+
 	// make transfer unbuffered
 	int opt = fcntl(client_sock, F_GETFL, 0);
         if (fcntl(client_sock, F_SETFL, opt | O_ASYNC) == -1)
@@ -510,7 +513,7 @@ bool stou_file(int sock, int client_sock, int type, int fpr) {
 		return FALSE;
 	}
 	while(1){
-		
+
 		int len = recv(client_sock,read_buff,SENDBUFSIZE,0);
 		if(len>0) {
 			write(fpr,read_buff,len);
@@ -548,7 +551,7 @@ bool store_file(int sock, int client_sock, int type, const char * file_name) {
 			free(read_buff);
 			close_connection(client_sock);
 			send_repl(sock,REPL_451);
-			
+
 			return FALSE;
 		}
 	}

@@ -4,6 +4,7 @@ LIBS =
 PROGRAM = tinyftp
 CC=csky-linux-gcc
 #CC=gcc
+CC=arm-hisiv300-linux-uclibcgnueabi-gcc
 CFLAGS= 
 COMPILE = $(CC) $(CFLAGS) -c
 LINK = $(CC) $(CFLAGS)

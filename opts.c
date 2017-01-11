@@ -32,7 +32,7 @@
 
 int assign_option(int, const char*,struct cmd_opts *,int);
 static void print_help();
-int dir_exists(const char *); 
+int dir_exists(const char *);
 
 /**
  * pars_cmd_args:
@@ -51,19 +51,19 @@ int pars_cmd_args(struct cmd_opts *copts,int argc,char *argv[]) {
 	copts->chrootdir    = "./";
 	copts->max_conn     = 5;
 	copts->listen_addr  = NULL;
-	
+
 	// remember the current read options. e.g. if the last read argument was "-l"
 	// current option is "limit", so we are waiting for a number of concurrent connections.
-	int current_option=0; 
+	int current_option=0;
 	for(i=1;i<argc;i++) {
 		len = strlen(argv[i]);
 		if(len <1)
 			continue;
 		if(current_option==0) {
 			if(argv[i][0]=='-') {
-				
+
 				switch(argv[i][1]) {
-					
+
 					case 'l': // limit
 						if(len>2) {
 							assign_option('l', argv[i]+2, copts,len-2);
@@ -103,7 +103,7 @@ int pars_cmd_args(struct cmd_opts *copts,int argc,char *argv[]) {
 					case 'd':
 						copts->daemonize = TRUE;
 						break;
-					
+
 					case 'h':
 					default:
 						print_help();
@@ -169,6 +169,7 @@ int assign_option(current_option, arg,copts,len)
 				return 5;
 			copts->chrootdir = malloc(sizeof(char *)*len);
 			strcpy(copts->chrootdir,arg);
+			printf("copts->chrootdir = %s\n", copts->chrootdir);
 		break;
 	}
 	return 0;
@@ -217,7 +218,7 @@ int dir_exists(const char *path) {
 /**
  * Read a string and return its representation as an integer.
  */
-int toint(str,strict) 
+int toint(str,strict)
 	const char* str ;
 	bool strict;
 	{

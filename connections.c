@@ -27,7 +27,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <arpa/inet.h> 
+#include <arpa/inet.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -49,7 +49,7 @@ int raiseerr(int err_code) {
 	return -1;
 }
 
-/** 
+/**
  * This is neccessary for future use of glib and gettext based localization.
  */
 const char * _(const char* message) {
@@ -58,7 +58,7 @@ const char * _(const char* message) {
 
 /**
  * Guess the transfer type, given the client requested type.
- * Actually in unix there is no difference between binary and 
+ * Actually in unix there is no difference between binary and
  * ascii mode when we work with file descriptors.
  * If #type is not recognized as a valid client request, -1 is returned.
  */
@@ -114,11 +114,11 @@ int make_client_connection(int sock_fd,int client_port,const char* client_addr) 
 
 /**
  * Close the connection to the client and exit the child proccess.
- * Although it is the same as close(sock_fd), in the future it can be used for 
+ * Although it is the same as close(sock_fd), in the future it can be used for
  * logging some stats about active and closed sessions.
  */
 void close_conn(int sock_fd) {
-	if (close(sock_fd) < 0) { 
+	if (close(sock_fd) < 0) {
 		raiseerr (5);
 	}
 	exit(0);
@@ -134,6 +134,7 @@ int get_command(int conn_fd,char *read_buff1,char *data_buff) {
 	char *rcv=read_buff;
 	int cmd_status = -1;
 	int recvbuff = recv(conn_fd,read_buff,RCVBUFSIZE,0);
+	printf("read_buff = %s\n", read_buff);
 	if(recvbuff<1) {
 		return CMD_CLOSE;
 	}
@@ -157,7 +158,7 @@ void sig_chld_handler(void) {
  * Send reply to the client socket, given the reply.
  */
 int send_repl(int send_sock,char *msg) {
-	if (send(send_sock, msg, strlen(msg),0) < 0) { 
+	if (send(send_sock, msg, strlen(msg),0) < 0) {
 		raiseerr (4);
 		close(send_sock);
 		exit(0);
@@ -169,7 +170,7 @@ int send_repl(int send_sock,char *msg) {
  * Send single reply to the client socket, given the reply and its length.
  */
 int send_repl_client_len(int send_sock,char *msg,int len) {
-	if (send(send_sock, msg, len,0) < 0) { 
+	if (send(send_sock, msg, len,0) < 0) {
 		raiseerr (4);
 		close(send_sock);
 	}
@@ -188,7 +189,7 @@ int send_repl_client(int send_sock,char *msg) {
  * Send single reply to the additional transfer socket, given the raply and its length.
  */
 int send_repl_len(int send_sock,char *msg,int len) {
-	if (send(send_sock, msg, len,0) < 0) { 
+	if (send(send_sock, msg, len,0) < 0) {
 		raiseerr (4);
 		close(send_sock);
 		exit(0);
@@ -241,7 +242,7 @@ int parse_port_data(char *data_buff,char *client_addr) {
 	len += strlen(result);
 	strcat(client_addr,result);
 	client_addr[len]='\0';
-	
+
 	result = strtok(NULL, PORTDELIM);
 	len = toint(result,FALSE);
 	if(_toint<0 || _toint>255)
@@ -258,10 +259,10 @@ void print_help(int sock) {
 	send_repl(sock,"    Some help message.\r\n    Probably nobody needs help from telnet.\r\n    See rfc959.\r\n");
 }
 /**
- * Main cycle for client<->server communication. 
+ * Main cycle for client<->server communication.
  * This is done synchronously. On each client message, it is parsed and recognized,
  * certain action is performed. After that we wait for the next client message
- * 
+ *
  */
 int interract(int conn_fd,cmd_opts *opts) {
 	static int BANNER_LEN = strlen(REPL_220);
@@ -283,7 +284,7 @@ int interract(int conn_fd,cmd_opts *opts) {
 			}
 			close_conn(conn_fd);
 		}
-		
+
 	}
 	if(max_limit_notify) {
 		send_repl(conn_fd,REPL_120);
@@ -299,19 +300,20 @@ int interract(int conn_fd,cmd_opts *opts) {
 	bool is_loged = FALSE;
 	bool state_user = FALSE;
 	char rename_from[MAXPATHLEN];
-	
+
 	memset((char *)&current_dir, 0, MAXPATHLEN);
 	strcpy(current_dir,opts->chrootdir);
 	strcpy(parent_dir,opts->chrootdir);
 	free(opts);
 	chdir(current_dir);
+	printf("111current_dir = %s\n", current_dir);
 	if((getcwd(current_dir,MAXPATHLEN)==NULL)) {
 		raiseerr(19);
 		close_conn(conn_fd);
 	}
 	memset((char *)&data_buff, 0, DATABUFSIZE);
 	memset((char *)&read_buff, 0, RCVBUFSIZE);
-	
+
 	reply[0]='\0';
 	int client_port = 0;
 	char client_addr[ADDRBUFSIZE];
@@ -322,6 +324,7 @@ int interract(int conn_fd,cmd_opts *opts) {
 		int result = get_command(conn_fd,read_buff,data_buff);
 		if(result != CMD_RNFR && result != CMD_RNTO && result != CMD_NOOP)
 			rename_from[0]='\0';
+		printf("result = %d\n", result);
 		switch(result) {
 			case CMD_UNKNOWN:
 			case -1:
@@ -437,9 +440,11 @@ int interract(int conn_fd,cmd_opts *opts) {
 				if(!is_loged) send_repl(conn_fd,REPL_530);
 				else {
 					reply[0]='\0';
+					printf("pwd current_dir = %s\n", current_dir);
 					len = sprintf(reply,REPL_257_PWD,current_dir);
 					reply[len] = '\0';
 					send_repl(conn_fd,reply);
+					printf("reply = %s\n", reply);
 				}
 				break;
 			case CMD_CDUP:
@@ -454,11 +459,14 @@ int interract(int conn_fd,cmd_opts *opts) {
 					if(data_buff==NULL || strlen(data_buff)==0 || data_buff[0]=='\0') {
 						send_repl(conn_fd,REPL_501);
 					} else {
+						printf("current_dir = %s\n", current_dir);
+						printf("virtual_dir = %s\n", virtual_dir);
 						if (strncmp(data_buff, opts->chrootdir, strlen(opts->chrootdir))) {
 							send_repl(conn_fd,REPL_501);
 						} else {
 							change_dir(conn_fd,parent_dir,current_dir,virtual_dir,data_buff);
 						}
+						printf("3434current_dir = %s\n", current_dir);
 					}
 				}
 				break;
@@ -495,7 +503,7 @@ int interract(int conn_fd,cmd_opts *opts) {
 				else {
 					if(client_fd!=-1){
 						close_connection(client_fd);
-					} 
+					}
 					send_repl(conn_fd,REPL_226);
 				}
 				break;
@@ -574,7 +582,7 @@ int interract(int conn_fd,cmd_opts *opts) {
 								break;
 							default:
 								send_repl(conn_fd,REPL_501);
-							
+
 						}
 					}
 				}
@@ -603,7 +611,7 @@ int interract(int conn_fd,cmd_opts *opts) {
 								break;
 							default:
 								send_repl(conn_fd,REPL_501);
-							
+
 						}
 					}
 				}
@@ -612,7 +620,7 @@ int interract(int conn_fd,cmd_opts *opts) {
 				send_repl(conn_fd,REPL_502);
 		}
 	}
-	
+
 	free(data_buff);
 	free(read_buff);
 	free(current_dir);
@@ -663,9 +671,9 @@ int create_socket(struct cmd_opts *opts) {
 	int sock = 0;
 	int pid  = 0;
 	open_connections=0;
-	
+
 	struct sockaddr_in servaddr;
-	pid = getuid();	
+	pid = getuid();
 	if(pid != 0 && opts->port <= 1024)
 	{
 		printf(_(" Access denied:\n     Only superuser can listen to ports (1-1024).\n You can use \"-p\" option to specify port, greater than 1024.\n"));
@@ -697,10 +705,10 @@ int create_socket(struct cmd_opts *opts) {
 
 	int flag = 1;
 	setsockopt(sock, SOL_SOCKET,SO_REUSEADDR,(char *) &flag, sizeof(int));
-	
+
 	// remove the Nagle algorhytm, which improves the speed of sending data.
 	setsockopt(sock, IPPROTO_TCP,TCP_NODELAY,(char *) &flag, sizeof(int));
-	
+
 	if(bind (sock, (struct sockaddr *)&servaddr, sizeof(servaddr))<0) {
 		if(opts->listen_any==FALSE) {
 			printf(_("Cannot bind address: %s\n"),opts->listen_addr);
@@ -721,12 +729,12 @@ int create_socket(struct cmd_opts *opts) {
 
 	for (;;) {
 		max_limit_notify = FALSE;
-		
+
 		if ((connection = accept(sock, (struct sockaddr *) &servaddr, &servaddr_len)) < 0) {
 			raiseerr(3);
 			return -1;
 		}
-		
+
 		pid = fork();
 		if(pid==0) {
 			if(open_connections >= opts->max_conn)
@@ -737,7 +745,7 @@ int create_socket(struct cmd_opts *opts) {
 			assert(close_connection(connection)>=0);
 		}
 		else {
-			 
+
 			close(connection);
 			close(sock);
 			assert(0);
