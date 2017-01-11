@@ -163,6 +163,7 @@ int send_repl(int send_sock,char *msg) {
 		close(send_sock);
 		exit(0);
 	}
+	printf("send repl : %s\n", msg);
 	return 0;
 }
 
@@ -463,6 +464,7 @@ int interract(int conn_fd,cmd_opts *opts) {
 						printf("virtual_dir = %s\n", virtual_dir);
 						if (strncmp(data_buff, opts->chrootdir, strlen(opts->chrootdir))) {
 							send_repl(conn_fd,REPL_501);
+							printf("222222\n");
 						} else {
 							change_dir(conn_fd,parent_dir,current_dir,virtual_dir,data_buff);
 						}
@@ -701,7 +703,7 @@ int create_socket(struct cmd_opts *opts) {
 		return 1;
 	}
 
-	bind_NIC(sock, "wlan0");
+	bind_NIC(sock, "eth0");
 
 	int flag = 1;
 	setsockopt(sock, SOL_SOCKET,SO_REUSEADDR,(char *) &flag, sizeof(int));
