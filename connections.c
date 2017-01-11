@@ -301,9 +301,11 @@ int interract(int conn_fd,cmd_opts *opts) {
 	bool is_loged = FALSE;
 	bool state_user = FALSE;
 	char rename_from[MAXPATHLEN];
+	char chrootdir[MAXPATHLEN];
 
 	memset((char *)&current_dir, 0, MAXPATHLEN);
 	strcpy(current_dir,opts->chrootdir);
+	strcpy(chrootdir, opts->chrootdir);
 	strcpy(parent_dir,opts->chrootdir);
 	free(opts);
 	chdir(current_dir);
@@ -462,7 +464,9 @@ int interract(int conn_fd,cmd_opts *opts) {
 					} else {
 						printf("current_dir = %s\n", current_dir);
 						printf("virtual_dir = %s\n", virtual_dir);
-						if (strncmp(data_buff, opts->chrootdir, strlen(opts->chrootdir))) {
+						printf("chrootdir = %s\n", chrootdir);
+						printf("data_buff = %s\n", data_buff);
+						if (strncmp(data_buff, chrootdir, strlen(chrootdir)-1) && data_buff[0] == '/') {
 							send_repl(conn_fd,REPL_501);
 							printf("222222\n");
 						} else {
@@ -741,6 +745,7 @@ int create_socket(struct cmd_opts *opts) {
 		if(pid==0) {
 			if(open_connections >= opts->max_conn)
 				max_limit_notify=TRUE;
+			printf("opt->chrootdir = %s\n", opts->chrootdir);
 			interract(connection,opts);
 		} else if(pid>0) {
 			open_connections++;
